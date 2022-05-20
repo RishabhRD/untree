@@ -27,6 +27,12 @@
 #include <variant>
 
 namespace untree {
+
 template <typename DirectoryType>
-using entry_t = std::variant<typename DirectoryType::file_type, DirectoryType>;
-}
+struct entry_t
+    : public std::variant<typename DirectoryType::file_type, DirectoryType> {
+  using file_type = typename DirectoryType::file_type;
+  using directory_type = DirectoryType;
+  using std::variant<file_type, DirectoryType>::variant;
+};
+}  // namespace untree

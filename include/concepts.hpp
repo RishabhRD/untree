@@ -38,8 +38,8 @@ template <typename Directory>
 concept directory =
     std::constructible_from<Directory, std::filesystem::path> &&
     requires(Directory dict) {
-       { dict.push_back(std::declval<entry_t<Directory>>()) } -> std::same_as<void>;
        typename Directory::file_type;
+       { dict.push_back(std::declval<entry_t<Directory>>()) } -> std::same_as<void>;
     } &&
     file<typename Directory::file_type>;
 }  // namespace untree
