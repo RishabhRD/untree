@@ -22,13 +22,9 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include <doctest/doctest.h>
+
+#include <optional>
 #include <string_view>
 
-namespace untree {
-struct line_node {
-  int depth;
-  std::string_view path;
-  friend auto operator==(const line_node&, const line_node&) -> bool = default;
-};
-}  // namespace untree
+using namespace std::literals;

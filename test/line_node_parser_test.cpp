@@ -22,13 +22,16 @@
  * SOFTWARE.
  */
 
-#pragma once
-#include <string_view>
+#include "line_node_parser.hpp"
 
-namespace untree {
-struct line_node {
-  int depth;
-  std::string_view path;
-  friend auto operator==(const line_node&, const line_node&) -> bool = default;
-};
-}  // namespace untree
+#include "line_node.hpp"
+#include "test_include.hpp"
+
+TEST_CASE("line node parsing") {
+  static_assert(untree::line_node_parser("│   │   ├── simple.cc\n"sv)->first ==
+                untree::line_node{3, "simple.cc"sv});
+
+  static_assert(
+      untree::line_node_parser("│   │   │   ├── cmake.check_cache\n"sv)
+          ->first == untree::line_node{4, "cmake.check_cache"sv});
+}
