@@ -42,4 +42,13 @@ concept directory =
        { dict.push_back(std::declval<entry_t<Directory>>()) } -> std::same_as<void>;
     } &&
     file<typename Directory::file_type>;
+
+template <typename Entry>
+concept entry =
+   requires(Entry e){
+     typename Entry::file_type;
+     typename Entry::directory_type;
+   } &&
+   file<typename Entry::file_type> &&
+   directory<typename Entry::directory_type>;
 }  // namespace untree

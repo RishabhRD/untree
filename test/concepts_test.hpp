@@ -46,3 +46,15 @@ TEST_CASE("directory concept type check") {
   };
   static_assert(untree::directory<directory_t>);
 }
+
+TEST_CASE("entry concept type check") {
+  struct file_t {
+    explicit file_t(const std::filesystem::path& /*unused*/) {}
+  };
+  struct directory_t {
+    using file_type = file_t;
+    explicit directory_t(const std::filesystem::path& /*unused*/) {}
+    void push_back(untree::entry_t<directory_t> /*unused*/) {}
+  };
+  static_assert(untree::entry<untree::entry_t<directory_t>>);
+}
