@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#pragma once
+
 #include <doctest/doctest.h>
 
 #include <optional>

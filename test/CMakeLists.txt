@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-file(GLOB test-sources "*_test.cpp")
+file(GLOB test_sources "*_test.cpp")
 add_executable(untree_tests ${test_sources} test_runner.cpp)
 target_include_directories(untree_tests PRIVATE ../include)
 target_link_libraries(untree_tests PRIVATE project_options)
