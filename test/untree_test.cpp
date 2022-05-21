@@ -25,7 +25,6 @@
 #include "untree.hpp"
 
 #include <algorithm>
-#include <iostream>
 
 #include "in_memory_entry.hpp"
 #include "test_include.hpp"
