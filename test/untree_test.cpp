@@ -39,7 +39,7 @@ TEST_CASE("single depth tree") {
       "├── document\n"
       "├── document.cc\n"
       "├── func\n";
-  auto const res = untree::parse_tree<entry_t>("/home", str);
+  auto const res = untree::parse_tree(dir_t{"/home"}, str);
   REQUIRE(res.has_value());
   auto entry = res->first;
   REQUIRE(entry.index() == 1);
@@ -61,7 +61,7 @@ TEST_CASE("nested depth tree") {
       "└── mvc\n"
       "├── document\n"
       "├── document.cc\n";
-  auto const res = untree::parse_tree<entry_t>("/home", str);
+  auto const res = untree::parse_tree(dir_t{"/home"}, str);
   REQUIRE(res.has_value());
   auto entry = res->first;
   REQUIRE(entry.index() == 1);
@@ -88,7 +88,7 @@ TEST_CASE("only directory on top") {
       "└── mvc\n"
       "    ├── document\n"
       "    ├── document.cc\n";
-  auto const res = untree::parse_tree<entry_t>("new_dir", str);
+  auto const res = untree::parse_tree(dir_t{"new_dir"}, str);
   REQUIRE(res.has_value());
   auto entry = res->first;
   test_util::print_entry(entry);

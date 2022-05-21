@@ -33,42 +33,43 @@
 #include "parser.hpp"
 
 namespace untree {
-template <entry Entry>
+template <directory Directory>
 class parse_tree_creator {
-  std::filesystem::path cur_path;
+  Directory root_dir;
   int depth;
-  using file_type = typename Entry::file_type;
-  using dir_type = typename Entry::directory_type;
+  using file_type = typename Directory::file_type;
+  using dir_type = Directory;
+  using entry_type = entry_t<Directory>;
 
  public:
-  parse_tree_creator(std::filesystem::path path_arg, int depth_arg)
-      : cur_path(std::move(path_arg)), depth(depth_arg) {}
+  parse_tree_creator(dir_type root_dir_arg, int depth_arg)
+      : root_dir(std::move(root_dir_arg)), depth(depth_arg) {}
 
-  auto operator()(std::string_view str) const -> parser::parsed_t<Entry> {
-    // TODO: constructor is not good place for side effects, maybe a create
-    // function should be there. This adds possibility for better error handling
-    // as well as disk_files.
+  auto operator()(std::string_view str) const -> parser::parsed_t<entry_type> {
     auto parser =
         line_node_parser | parser::if_satisfies([this](line_node node) {
           return node.depth == depth;
         }) |
         parser::then([this](line_node node) {
-          return parse_tree_creator(cur_path / node.path, depth + 1) |
-                 parser::or_with(
-                     parser::always(Entry{file_type{cur_path / node.path}}));
+          return parse_tree_creator(dir_type{root_dir.path() / node.path},
+                                    depth + 1) |
+                 parser::or_with(parser::always(
+                     entry_type{file_type{root_dir.path() / node.path}}));
         }) |
-        parser::many1(dir_type{cur_path},
-                      [](dir_type dir, Entry entry) {
+        parser::many1(root_dir,
+                      [](dir_type dir, entry_type entry) {
                         dir.push_back(std::move(entry));
                         return dir;
                       }) |
-        parser::transform([](dir_type dir) { return Entry{dir}; });
+        parser::transform([](dir_type dir) { return entry_type{dir}; });
     return std::invoke(std::move(parser), str);
   }
 };
 
-template <typename Entry>
-auto parse_tree(std::filesystem::path cur_path, std::string_view str) {
-  return parse_tree_creator<Entry>{cur_path, 1}(str);
+// creates directory structure of str inside root_dir
+// precondition: root_dir is already created
+template <directory Directory>
+auto parse_tree(Directory root_dir, std::string_view str) {
+  return parse_tree_creator<Directory>{root_dir, 1}(str);
 }
 }  // namespace untree
