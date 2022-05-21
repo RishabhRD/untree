@@ -22,4 +22,15 @@
  * SOFTWARE.
  */
 
-auto main() -> int {}
+#include <iostream>
+#include <sstream>
+
+#include "disk_entry.hpp"
+#include "untree.hpp"
+
+auto main() -> int {
+  std::stringstream buffer;
+  buffer << std::cin.rdbuf();
+  std::string str = buffer.str();
+  untree::parse_tree<untree::disk_entry>("new_dir", str);
+}

@@ -45,6 +45,9 @@ class parse_tree_creator {
       : cur_path(std::move(path_arg)), depth(depth_arg) {}
 
   auto operator()(std::string_view str) const -> parser::parsed_t<Entry> {
+    // TODO: constructor is not good place for side effects, maybe a create
+    // function should be there. This adds possibility for better error handling
+    // as well as disk_files.
     auto parser =
         line_node_parser | parser::if_satisfies([this](line_node node) {
           return node.depth == depth;

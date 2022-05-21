@@ -27,14 +27,13 @@
 #include <entry.hpp>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 namespace untree {
 
 struct disk_file {
   explicit disk_file(std::filesystem::path const& path) {
-    if (!std::filesystem::exists(path)) {
-      std::ofstream{path.native()};
-    }
+    std::ofstream{path.native()};
   }
 };
 
