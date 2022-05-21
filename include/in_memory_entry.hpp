@@ -40,6 +40,9 @@ struct in_memory_file {
 
   auto path() -> std::filesystem::path& { return path_; }
 
+  friend auto operator==(in_memory_file const&, in_memory_file const&) noexcept
+      -> bool = default;
+
  private:
   std::filesystem::path path_;
 };
@@ -53,6 +56,10 @@ struct in_memory_directory_of
   explicit in_memory_directory_of(std::filesystem::path path)
       : path_(std::move(path)) {}
 
+  explicit in_memory_directory_of(std::filesystem::path path,
+                                  std::initializer_list<entry_type> entries)
+      : std::vector<entry_type>(entries), path_(std::move(path)) {}
+
   [[nodiscard]] auto path() const -> std::filesystem::path const& {
     return path_;
   }
@@ -60,6 +67,10 @@ struct in_memory_directory_of
   auto path() -> std::filesystem::path& { return path_; }
 
   using std::vector<entry_type>::vector;
+
+  friend auto operator==(in_memory_directory_of const&,
+                         in_memory_directory_of const&) noexcept
+      -> bool = default;
 
  private:
   std::filesystem::path path_;
