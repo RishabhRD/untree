@@ -33,6 +33,15 @@
 #include "parser.hpp"
 
 namespace untree {
+
+namespace detail {
+constexpr auto line_node_depth_parser(int depth) {
+  return line_node_parser | parser::if_satisfies([depth](line_node node) {
+           return node.depth == depth;
+         });
+}
+}  // namespace detail
+
 template <directory Directory>
 class parse_tree_creator {
   Directory root_dir;
@@ -47,24 +56,30 @@ class parse_tree_creator {
 
   auto operator()(std::string_view str) const -> parser::parsed_t<entry_type> {
     auto parser =
-        line_node_parser | parser::if_satisfies([this](line_node node) {
-          return node.depth == depth;
-        }) |
-        parser::then([this](line_node node) {
-          // TODO: precondition for parse_tree is dir should be created that is
-          // not being satisfied here.
-          return parse_tree_creator(dir_type{root_dir.path() / node.path},
-                                    depth + 1) |
-                 parser::or_with(parser::always(
-                     entry_type{file_type{root_dir.path() / node.path}}));
-        }) |
-        parser::many1(root_dir,
+        detail::line_node_depth_parser(depth)
+	| parser::then([this](line_node node) {
+          return detail::line_node_depth_parser(depth + 1)
+	         | parser::ignore_previous(parser::always_lazy([this, node] {
+                     auto dir =  dir_type{root_dir.path() / node.path};
+		     dir.create();
+		     return dir;
+                   }))
+		 | parser::unconsumed()
+		 | parser::then([this](dir_type dir) {
+                     return parse_tree_creator(std::move(dir), depth + 1);
+                   })
+		 | parser::or_with(parser::always_lazy([this, node] {
+                     auto file = file_type{root_dir.path() / node.path};
+		     file.create();
+		     return entry_type{file};
+                   }));
+          })
+        | parser::many1(root_dir,
                       [](dir_type dir, entry_type entry) {
-                        std::visit([](auto& e) { e.create(); }, entry);
                         dir.push_back(std::move(entry));
                         return dir;
-                      }) |
-        parser::transform([](dir_type dir) { return entry_type{dir}; });
+                      })
+	| parser::transform([](dir_type dir) { return entry_type{dir}; });
     return std::invoke(std::move(parser), str);
   }
 };

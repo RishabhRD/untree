@@ -220,6 +220,16 @@ namespace detail {
         };
   }
 
+  template <Parser P>
+  constexpr auto unconsumed(P && p) {
+    return
+        [p = std::forward<P>(p)](std::string_view str) -> parser_result_t<P> {
+          auto res = std::invoke(p, str);
+          if (!res) return {};
+          return std::make_pair(res->first, str);
+        };
+  }
+
 }  // namespace detail
 
 template <typename F>
@@ -275,6 +285,14 @@ template <typename T>
 constexpr auto always(T val) {
   return [val = std::move(val)](std::string_view str) -> parsed_t<T> {
     return std::make_pair(val, str);
+  };
+}
+
+template <std::invocable F>
+constexpr auto always_lazy(F f) {
+  return [f = std::move(f)](
+             std::string_view str) -> parsed_t<std::invoke_result_t<F>> {
+    return std::make_pair(std::invoke(f), str);
   };
 }
 
@@ -373,5 +391,8 @@ constexpr auto many_if(Predicate &&p) {
   using namespace std::string_view_literals;
   return or_with(many1_if(std::forward<Predicate>(p)), always(""sv));
 }
+
+constexpr auto unconsumed =
+    piped([]<typename P>(P &&p) { return detail::unconsumed(p); });
 
 };  // namespace parser

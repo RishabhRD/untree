@@ -27,7 +27,6 @@
 #include <entry.hpp>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 
 namespace untree {
 
@@ -37,7 +36,6 @@ struct disk_file {
   void create() {
     if (!std::filesystem::exists(path_)) {
       std::ofstream of(path_.native());
-      std::cout << "opened: " << of.is_open() << std::endl;
     }
   }
 
