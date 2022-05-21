@@ -27,6 +27,7 @@
 #include <algorithm>
 
 #include "in_memory_entry.hpp"
+#include "print_dir.hpp"
 #include "test_include.hpp"
 
 using entry_t = untree::in_memory_entry;
@@ -75,6 +76,36 @@ TEST_CASE("nested depth tree") {
                                file_t{"/home/mvc"},
                                file_t{"/home/document"},
                                file_t{"/home/document.cc"},
+                           }};
+  REQUIRE(expected_dir == root_dir);
+}
+
+TEST_CASE("only directory on top") {
+  constexpr auto str =
+      "├── constexpr\n"
+      "│   ├── simple.cc\n"
+      "│   └── sort.cc\n"
+      "└── mvc\n"
+      "    ├── document\n"
+      "    ├── document.cc\n";
+  auto const res = untree::parse_tree<entry_t>("new_dir", str);
+  REQUIRE(res.has_value());
+  auto entry = res->first;
+  test_util::print_entry(entry);
+  REQUIRE(entry.index() == 1);
+  auto root_dir = std::get<dir_t>(entry);
+  dir_t const expected_dir{"new_dir",
+                           {
+                               dir_t{"new_dir/constexpr",
+                                     {
+                                         file_t{"new_dir/constexpr/simple.cc"},
+                                         file_t{"new_dir/constexpr/sort.cc"},
+                                     }},
+                               dir_t{"new_dir/mvc",
+                                     {
+                                         file_t{"new_dir/mvc/document"},
+                                         file_t{"new_dir/mvc/document.cc"},
+                                     }},
                            }};
   REQUIRE(expected_dir == root_dir);
 }
