@@ -32,11 +32,16 @@
 namespace untree {
 
 template <typename F>
-concept file = std::constructible_from<F, std::filesystem::path>;
+concept file = std::constructible_from<F, std::filesystem::path> &&
+               requires(F f){
+		 // TODO: enchance create for error handling
+		 f.create();
+		 {f.path()} -> std::convertible_to<std::filesystem::path>;
+	       };
 
 template <typename Directory>
 concept directory =
-    std::constructible_from<Directory, std::filesystem::path> &&
+    file<Directory> &&
     requires(Directory dict) {
        typename Directory::file_type;
        { dict.push_back(std::declval<entry_t<Directory>>()) } -> std::same_as<void>;

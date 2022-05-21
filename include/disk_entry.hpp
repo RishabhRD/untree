@@ -32,22 +32,48 @@
 namespace untree {
 
 struct disk_file {
-  explicit disk_file(std::filesystem::path const& path) {
-    std::ofstream{path.native()};
+  explicit disk_file(std::filesystem::path path) : path_(std::move(path)) {}
+
+  void create() {
+    if (!std::filesystem::exists(path_)) {
+      std::ofstream of(path_.native());
+      std::cout << "opened: " << of.is_open() << std::endl;
+    }
   }
+
+  [[nodiscard]] auto path() const -> std::filesystem::path const& {
+    return path_;
+  }
+
+  auto path() -> std::filesystem::path& { return path_; }
+
+ private:
+  std::filesystem::path path_;
 };
 
 template <typename File>
 struct disk_directory_of {
   using file_type = File;
-  explicit disk_directory_of(std::filesystem::path const& path) {
-    if (!std::filesystem::exists(path)) {
-      std::filesystem::create_directory(path);
-    }
-  }
+  explicit disk_directory_of(std::filesystem::path path)
+      : path_(std::move(path)) {}
 
   constexpr static void push_back(
       entry_t<disk_directory_of<File>> const& /*unused*/) {}
+
+  void create() {
+    if (!std::filesystem::exists(path_)) {
+      std::filesystem::create_directory(path_);
+    }
+  }
+
+  [[nodiscard]] auto path() const -> std::filesystem::path const& {
+    return path_;
+  }
+
+  auto path() -> std::filesystem::path& { return path_; }
+
+ private:
+  std::filesystem::path path_;
 };
 
 using disk_directory = disk_directory_of<disk_file>;

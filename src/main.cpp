@@ -28,4 +28,10 @@
 #include "disk_entry.hpp"
 #include "untree.hpp"
 
-auto main() -> int {}
+auto main() -> int {
+  std::stringstream buffer;
+  buffer << std::cin.rdbuf();
+  untree::disk_directory root_dir{"new_dir"};
+  root_dir.create();
+  untree::parse_tree(root_dir, buffer.str());
+}

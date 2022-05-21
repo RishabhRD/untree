@@ -43,6 +43,8 @@ struct in_memory_file {
   friend auto operator==(in_memory_file const&, in_memory_file const&) noexcept
       -> bool = default;
 
+  constexpr static inline void create() {}
+
  private:
   std::filesystem::path path_;
 };
@@ -65,6 +67,8 @@ struct in_memory_directory_of
   }
 
   auto path() -> std::filesystem::path& { return path_; }
+
+  constexpr static inline void create() {}
 
   using std::vector<entry_type>::vector;
 

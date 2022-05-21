@@ -51,6 +51,8 @@ class parse_tree_creator {
           return node.depth == depth;
         }) |
         parser::then([this](line_node node) {
+          // TODO: precondition for parse_tree is dir should be created that is
+          // not being satisfied here.
           return parse_tree_creator(dir_type{root_dir.path() / node.path},
                                     depth + 1) |
                  parser::or_with(parser::always(
@@ -58,6 +60,7 @@ class parse_tree_creator {
         }) |
         parser::many1(root_dir,
                       [](dir_type dir, entry_type entry) {
+                        std::visit([](auto& e) { e.create(); }, entry);
                         dir.push_back(std::move(entry));
                         return dir;
                       }) |
