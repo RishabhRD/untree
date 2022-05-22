@@ -22,17 +22,27 @@
  * SOFTWARE.
  */
 
-#include <iostream>
-#include <sstream>
-
-#include "disk_entry.hpp"
-#include "untree.hpp"
 #include "verbose_entry.hpp"
 
-auto main() -> int {
-  std::stringstream buffer;
-  buffer << std::cin.rdbuf();
-  untree::verbose_directory<untree::disk_directory> root_dir{"new_dir"};
-  root_dir.create();
-  untree::parse_tree(root_dir, buffer.str());
+#include <concepts>
+
+#include "concepts.hpp"
+#include "in_memory_entry.hpp"
+#include "test_include.hpp"
+
+using file_t = untree::verbose_file<untree::in_memory_file>;
+using dir_t = untree::verbose_directory<untree::in_memory_directory>;
+using entry_t = untree::verbose_entry<untree::in_memory_entry>;
+
+TEST_CASE("file concepts test") { static_assert(untree::file<file_t>); }
+
+TEST_CASE("directory concepts test") {
+  static_assert(untree::directory<dir_t>);
+  static_assert(std::same_as<dir_t::file_type, file_t>);
+}
+
+TEST_CASE("entry concepts test") {
+  static_assert(untree::entry<entry_t>);
+  static_assert(std::same_as<entry_t::file_type, file_t>);
+  static_assert(std::same_as<entry_t::directory_type, dir_t>);
 }
