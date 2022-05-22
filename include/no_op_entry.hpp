@@ -31,7 +31,7 @@ namespace untree {
 struct no_op_file {
   explicit no_op_file(std::filesystem::path path) : path_(std::move(path)) {}
 
-  void create() const {}
+  constexpr static void create() {}
 
   [[nodiscard]] auto path() const -> std::filesystem::path const& {
     return path_;
@@ -48,7 +48,7 @@ struct no_op_directory {
   explicit no_op_directory(std::filesystem::path path)
       : path_(std::move(path)) {}
 
-  void create() const {}
+  constexpr static void create() {}
 
   [[nodiscard]] auto path() const -> std::filesystem::path const& {
     return path_;
@@ -56,7 +56,7 @@ struct no_op_directory {
 
   auto path() -> std::filesystem::path& { return path_; }
 
-  void push_back(entry_t<no_op_directory> const& /*unused*/) {}
+  constexpr static auto push_back(entry_t<no_op_directory> const& /*unused*/) {}
 
  private:
   std::filesystem::path path_;
