@@ -49,4 +49,5 @@ macro(run_conan)
     https://api.bintray.com/conan/bincrafters/public-conan)
 
   package(doctest/2.4.8)
+  package(argparse/2.4)
 endmacro()

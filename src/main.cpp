@@ -22,17 +22,77 @@
  * SOFTWARE.
  */
 
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 
+// TODO: figure out why argparse conan fails to compile, then use it form conan
+#include "argparse.hpp"
 #include "disk_entry.hpp"
+#include "no_op_entry.hpp"
 #include "untree.hpp"
 #include "verbose_entry.hpp"
 
-auto main() -> int {
-  std::stringstream buffer;
-  buffer << std::cin.rdbuf();
-  untree::verbose_directory<untree::disk_directory> root_dir{"new_dir"};
-  root_dir.create();
-  untree::parse_tree(root_dir, buffer.str());
+auto main(int argc, char** argv) -> int {
+  try {
+    argparse::ArgumentParser program("untree");
+    program.add_argument("directory")
+        .help("root directory for new directory structure");
+    program.add_argument("--verbose")
+        .help("print created files/directories")
+        .default_value(false)
+        .implicit_value(true);
+    program.add_argument("--dry-run")
+        .help("print created files/directories without actually creating")
+        .default_value(false)
+        .implicit_value(true);
+    program.add_argument("--create")
+        .help("")
+        .default_value(false)
+        .implicit_value(true);
+    try {
+      program.parse_args(argc, argv);
+    } catch (std::runtime_error const& err) {
+      std::cerr << err.what() << std::endl;
+      std::cerr << program;
+      return 1;
+    }
+    auto const dir = std::filesystem::path(program.get("directory"));
+    auto const is_verbose = program["--verbose"];
+    auto const is_dry_run = program["--dry-run"];
+    auto const to_create = program["--create"];
+    if (!std::filesystem::exists(dir)) {
+      if (to_create == false and is_dry_run == false) {
+        std::cerr << dir.native() << " doesn't exist!!!\n";
+        return 1;
+      }
+      if (to_create == true and is_dry_run == false) {
+        try {
+          std::filesystem::create_directory(dir);
+        } catch (std::filesystem::filesystem_error const& err) {
+          std::cerr << "failed to create directory : " << dir.native()
+                    << std::endl;
+          std::cerr << err.what() << std::endl;
+          return 1;
+        }
+      }
+    }
+    std::stringstream stream;
+    stream << std::cin.rdbuf();
+    auto const str{stream.str()};
+    if (is_dry_run == true) {
+      using dir_t = untree::verbose_directory<untree::no_op_directory>;
+      untree::parse_tree(dir_t{dir}, str);
+    } else if (is_verbose == true) {
+      using dir_t = untree::verbose_directory<untree::disk_directory>;
+      untree::parse_tree(dir_t{dir}, str);
+    } else {
+      using dir_t = untree::disk_directory;
+      untree::parse_tree(dir_t{dir}, str);
+    }
+  } catch (std::exception const& ex) {
+    std::cerr << ex.what() << std::endl;
+    return 1;
+  }
+  return 0;
 }
