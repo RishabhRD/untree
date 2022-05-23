@@ -12,6 +12,7 @@
 #include <utility>
 
 namespace parser {
+
 template <typename T>
 using parsed_t = std::optional<std::pair<T, std::string_view>>;
 
@@ -32,6 +33,15 @@ concept ParserOf =
     Parser<ParserFunc> && std::same_as<parser_value_t<ParserFunc>, T>;
 
 namespace detail {
+  constexpr auto papply =
+      []<typename Func, typename... Args>(Func && func, Args && ...args) {
+    if constexpr (std::invocable<Func, Args...>) {
+      return std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
+    } else {
+      return std::bind_front(std::forward<Func>(func),
+                             std::forward<Args>(args)...);
+    }
+  };
 
   namespace pipes {
 
@@ -230,6 +240,23 @@ namespace detail {
         };
   }
 
+  template <Parser P1, Parser P2>
+  constexpr auto operator^(P1 &&p1, P2 &&p2) {
+    using result_t = std::invoke_result_t<decltype(papply), parser_value_t<P1>,
+                                          parser_value_t<P2>>;
+    return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
+               std::string_view str) -> parsed_t<result_t> {
+      if (auto p1_r = std::invoke(p1, str)) {
+        if (auto p2_r = std::invoke(p2, p1_r->second)) {
+          return {
+              {std::invoke(papply, p1_r->first, p2_r->first), p2_r->second}};
+        }
+        return {};
+      }
+      return {};
+    };
+  }
+
 }  // namespace detail
 
 template <typename F>
@@ -394,5 +421,11 @@ constexpr auto many_if(Predicate &&p) {
 
 constexpr auto unconsumed =
     piped([]<typename P>(P &&p) { return detail::unconsumed(p); });
+
+// credit: Petter Holmberg
+constexpr auto sequence = []<typename F, Parser... P>(F && f, P &&...p) {
+  using detail::operator^;
+  return (always(std::forward<F>(f)) ^ ... ^ std::forward<P>(p));
+};
 
 };  // namespace parser
