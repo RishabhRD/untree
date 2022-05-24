@@ -35,7 +35,7 @@ namespace detail {
 template <typename DirView>
 constexpr auto get_parent_n(int n, DirView dir) {
   for (int i = 0; i < n; ++i) {
-    dir = dir.parent();
+    dir = std::move(dir).parent();
   }
   return dir;
 }
