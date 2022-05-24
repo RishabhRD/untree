@@ -22,33 +22,11 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "in_memory_directory.hpp"
 
-#include "line_node.hpp"
-#include "parser.hpp"
+#include "directory_concepts.hpp"
+#include "test_include.hpp"
 
-namespace untree {
-namespace detail {
-inline constexpr auto seperator_parser =
-    parser::str("    ")                     //
-    | parser::or_with(parser::str("└── "))  //
-    | parser::or_with(parser::str("├── "))  //
-    | parser::or_with(parser::str("│   "))  //
-    | parser::or_with(parser::str("│\u00A0\u00A0 "));
-
-inline constexpr auto depth_count_parser =
-    parser::many(seperator_parser, 0, [](auto num, auto) { return num + 1; });
-
-inline constexpr auto name_parser =
-    parser::many_if([](auto c) { return c != '\n'; }) |
-    parser::ignore(parser::symbol('\n'));
-}  // namespace detail
-
-inline constexpr auto line_node_parser =
-    parser::then(detail::depth_count_parser, [](auto depth) {
-      return parser::transform(detail::name_parser, [depth](auto str) {
-        return line_node{depth, str};
-      });
-    });
-
-}  // namespace untree
+TEST_CASE("directory concept check") {
+  static_assert(untree::directory<untree::in_memory_directory>);
+}

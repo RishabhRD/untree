@@ -24,15 +24,15 @@
 
 #pragma once
 
-#include <variant>
+#include <string_view>
+#include <tuple>
 
 namespace untree {
+enum class entry_type { file, directory };
 
-template <typename DirectoryType>
-struct entry_t
-    : public std::variant<typename DirectoryType::file_type, DirectoryType> {
-  using file_type = typename DirectoryType::file_type;
-  using directory_type = DirectoryType;
-  using std::variant<file_type, DirectoryType>::variant;
+struct entry {
+  std::string_view name;
+  int depth;
+  entry_type kind;
 };
 }  // namespace untree

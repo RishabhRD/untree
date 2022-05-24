@@ -28,10 +28,11 @@
 
 // TODO: figure out why argparse conan fails to compile, then use it form conan
 #include "argparse.hpp"
-#include "disk_entry.hpp"
-#include "no_op_entry.hpp"
+#include "directory_view.hpp"
+#include "disk_directory.hpp"
+#include "no_op_directory.hpp"
 #include "untree.hpp"
-#include "verbose_entry.hpp"
+#include "verbose_directory.hpp"
 
 auto main(int argc, char** argv) -> int {
   try {
@@ -81,14 +82,16 @@ auto main(int argc, char** argv) -> int {
     stream << std::cin.rdbuf();
     auto const str{stream.str()};
     if (is_dry_run == true) {
-      using dir_t = untree::verbose_directory<untree::no_op_directory>;
-      untree::parse_tree(dir_t{dir}, str);
+      untree::parse_tree(untree::directory_view{untree::verbose_directory{
+                             untree::no_op_directory{}}},
+                         str);
     } else if (is_verbose == true) {
-      using dir_t = untree::verbose_directory<untree::disk_directory>;
-      untree::parse_tree(dir_t{dir}, str);
+      untree::parse_tree(untree::directory_view{untree::verbose_directory{
+                             untree::disk_directory{dir}}},
+                         str);
     } else {
-      using dir_t = untree::disk_directory;
-      untree::parse_tree(dir_t{dir}, str);
+      untree::parse_tree(untree::directory_view{untree::disk_directory{dir}},
+                         str);
     }
   } catch (std::exception const& ex) {
     std::cerr << ex.what() << std::endl;

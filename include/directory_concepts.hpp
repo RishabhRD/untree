@@ -22,19 +22,29 @@
  * SOFTWARE.
  */
 
-#include "disk_entry.hpp"
+#pragma once
 
-#include "concepts.hpp"
-#include "test_include.hpp"
+#include <concepts>
+#include <directory_view.hpp>
+#include <type_traits>
 
-TEST_CASE("file concepts test") {
-  static_assert(untree::file<untree::disk_file>);
-}
+namespace untree {
 
-TEST_CASE("directory concepts test") {
-  static_assert(untree::directory<untree::disk_directory>);
-}
+template <typename DirView, typename Directory>
+concept is_directory_view_of =
+    std::same_as<DirView, directory_view<std::decay_t<Directory>&>> ||
+    std::same_as<DirView, directory_view<std::decay_t<Directory>&&>>;
 
-TEST_CASE("entry concepts test") {
-  static_assert(untree::entry<untree::disk_entry>);
-}
+template <typename DirView>
+concept is_directory_view =
+    std::same_as<DirView, directory_view<std::decay_t<typename DirView::dir_type>&>> ||
+    std::same_as<DirView, directory_view<std::decay_t<typename DirView::dir_type>&&>>;
+
+template <typename Directory>
+concept directory = requires(Directory dict) {
+  { dict.add_dir(std::declval<std::string_view>()) } -> is_directory_view_of<Directory>;
+  { dict.add_file(std::declval<std::string_view>()) } -> std::same_as<void>;
+  { dict.parent() } -> is_directory_view_of<Directory>;
+};
+
+}  // namespace untree

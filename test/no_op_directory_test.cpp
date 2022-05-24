@@ -22,19 +22,11 @@
  * SOFTWARE.
  */
 
-#include "in_memory_entry.hpp"
+#include "no_op_directory.hpp"
 
-#include "concepts.hpp"
+#include "directory_concepts.hpp"
 #include "test_include.hpp"
 
-TEST_CASE("entry concept for in_memory_entry") {
-  static_assert(untree::entry<untree::in_memory_entry>);
-}
-
-TEST_CASE("file concept for in_memory_file") {
-  static_assert(untree::file<untree::in_memory_file>);
-}
-
-TEST_CASE("directory concept for in_memory_entry") {
-  static_assert(untree::directory<untree::in_memory_directory>);
+TEST_CASE("directory concept check") {
+  static_assert(untree::directory<untree::no_op_directory>);
 }

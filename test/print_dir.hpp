@@ -26,7 +26,7 @@
 
 #include <iostream>
 
-#include "in_memory_entry.hpp"
+#include "in_memory_directory.hpp"
 
 namespace test_util {
 template <typename T>
@@ -35,8 +35,6 @@ void print_n_times(int n, T ele) {
     std::cout << ele;
   }
 }
-
-void print_entry(int /*depth*/, untree::in_memory_entry const& /*entry*/);
 
 inline void print_file(int depth, untree::in_memory_file const& file) {
   print_n_times(depth, ' ');
@@ -48,19 +46,15 @@ inline void print_dir(int depth,  // NOLINT
   print_n_times(depth, ' ');
   std::cout << dir.path().native() << '\n';
   for (auto const& entry : dir) {
-    print_entry(depth + 2, entry);
+    if (entry.is_file()) {
+      print_file(depth + 2, entry.get_file());
+    } else {
+      print_dir(depth + 2, entry.get_dir());
+    }
   }
 }
 
-inline void print_entry(int depth,  // NOLINT
-                        untree::in_memory_entry const& entry) {
-  if (entry.index() == 0)
-    print_file(depth, std::get<0>(entry));
-  else
-    print_dir(depth, std::get<1>(entry));
-}
-
-inline void print_entry(untree::in_memory_entry const& entry) {
-  print_entry(0, entry);
+inline void print_dir(untree::in_memory_directory const& dir) {
+  print_dir(0, dir);
 }
 }  // namespace test_util

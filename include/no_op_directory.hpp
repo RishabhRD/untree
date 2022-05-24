@@ -22,58 +22,20 @@
  * SOFTWARE.
  */
 
-#pragma once
-
-#include <entry.hpp>
-#include <filesystem>
-#include <fstream>
+#include "directory_view.hpp"
 
 namespace untree {
 
-struct disk_file {
-  explicit disk_file(std::filesystem::path path) : path_(std::move(path)) {}
+struct no_op_directory {
+  explicit constexpr no_op_directory() = default;
 
-  void create() {
-    if (!std::filesystem::exists(path_)) {
-      std::ofstream of(path_.native());
-    }
+  constexpr static void add_file(std::string_view /*unused*/) {}
+
+  static auto add_dir(std::string_view /*unused*/) {
+    return directory_view{no_op_directory{}};
   }
 
-  [[nodiscard]] auto path() const -> std::filesystem::path const& {
-    return path_;
-  }
-
-  auto path() -> std::filesystem::path& { return path_; }
-
- private:
-  std::filesystem::path path_;
+  static auto parent() { return directory_view{no_op_directory{}}; }
 };
 
-template <typename File>
-struct disk_directory_of {
-  using file_type = File;
-  explicit disk_directory_of(std::filesystem::path path)
-      : path_(std::move(path)) {}
-
-  constexpr static void push_back(
-      entry_t<disk_directory_of<File>> const& /*unused*/) {}
-
-  void create() {
-    if (!std::filesystem::exists(path_)) {
-      std::filesystem::create_directory(path_);
-    }
-  }
-
-  [[nodiscard]] auto path() const -> std::filesystem::path const& {
-    return path_;
-  }
-
-  auto path() -> std::filesystem::path& { return path_; }
-
- private:
-  std::filesystem::path path_;
-};
-
-using disk_directory = disk_directory_of<disk_file>;
-using disk_entry = entry_t<disk_directory>;
 }  // namespace untree

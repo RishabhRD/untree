@@ -22,39 +22,56 @@
  * SOFTWARE.
  */
 
-#include <filesystem>
+#pragma once
 
-#include "concepts.hpp"
-#include "entry.hpp"
-#include "test_include.hpp"
+#include <string_view>
 
-TEST_CASE("file concept type check") {
-  struct file_t {
-    explicit file_t(const std::filesystem::path& /*unused*/) {}
-  };
-  static_assert(untree::file<file_t>);
-}
+namespace untree {
 
-TEST_CASE("directory concept type check") {
-  struct file_t {
-    explicit file_t(const std::filesystem::path& /*unused*/) {}
-  };
-  struct directory_t {
-    using file_type = file_t;
-    explicit directory_t(const std::filesystem::path& /*unused*/) {}
-    void push_back(untree::entry_t<directory_t> /*unused*/) {}
-  };
-  static_assert(untree::directory<directory_t>);
-}
+template <typename Directory>
+struct directory_view;
 
-TEST_CASE("entry concept type check") {
-  struct file_t {
-    explicit file_t(const std::filesystem::path& /*unused*/) {}
-  };
-  struct directory_t {
-    using file_type = file_t;
-    explicit directory_t(const std::filesystem::path& /*unused*/) {}
-    void push_back(untree::entry_t<directory_t> /*unused*/) {}
-  };
-  static_assert(untree::entry<untree::entry_t<directory_t>>);
-}
+template <typename Directory>
+struct directory_view<Directory&> {
+ private:
+  Directory* dir_;
+
+ public:
+  using dir_type = Directory;
+
+  explicit directory_view(Directory& dir) : dir_(&dir) {}
+
+  auto add_file(std::string_view path) { dir_->add_file(path); }
+
+  auto add_dir(std::string_view path) { return dir_->add_dir(path); }
+
+  auto parent() { return dir_->parent(); }
+
+  auto dir() -> Directory& { return *dir_; }
+};
+
+template <typename Directory>
+struct directory_view<Directory&&> {
+ private:
+  Directory dir_;
+
+ public:
+  using dir_type = Directory;
+
+  explicit directory_view(Directory dir) : dir_(std::move(dir)) {}
+
+  auto add_file(std::string_view path) { dir_.add_file(path); }
+
+  auto add_dir(std::string_view path) { return dir_.add_dir(path); }
+
+  auto parent() { return dir_.parent(); }
+
+  auto dir() const { return dir_; }
+};
+
+template <typename Directory>
+directory_view(Directory&) -> directory_view<Directory&>;
+
+template <typename Directory>
+directory_view(Directory&&) -> directory_view<Directory&&>;
+}  // namespace untree

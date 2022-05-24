@@ -33,13 +33,13 @@ concept ParserOf =
     Parser<ParserFunc> && std::same_as<parser_value_t<ParserFunc>, T>;
 
 namespace detail {
-  constexpr auto papply =
-      []<typename Func, typename... Args>(Func && func, Args && ...args) {
-    if constexpr (std::invocable<Func, Args...>) {
-      return std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
+  constexpr auto papply = [](auto &&func, auto &&...args) {
+    if constexpr (std::invocable<decltype(func), decltype(args)...>) {
+      return std::invoke(std::forward<decltype(func)>(func),
+                         std::forward<decltype(args)>(args)...);
     } else {
-      return std::bind_front(std::forward<Func>(func),
-                             std::forward<Args>(args)...);
+      return std::bind_front(std::forward<decltype(func)>(func),
+                             std::forward<decltype(args)>(args)...);
     }
   };
 
@@ -423,9 +423,10 @@ constexpr auto unconsumed =
     piped([]<typename P>(P &&p) { return detail::unconsumed(p); });
 
 // credit: Petter Holmberg
-constexpr auto sequence = []<typename F, Parser... P>(F && f, P &&...p) {
+constexpr auto sequence = [](auto &&f, auto &&...p) {
   using detail::operator^;
-  return (always(std::forward<F>(f)) ^ ... ^ std::forward<P>(p));
+  return (always(std::forward<decltype(f)>(f)) ^ ... ^
+          std::forward<decltype(p)>(p));
 };
 
 };  // namespace parser

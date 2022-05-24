@@ -22,38 +22,18 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "verbose_directory.hpp"
 
 #include <concepts>
-#include <filesystem>
 
-#include "entry.hpp"
+#include "directory_concepts.hpp"
+#include "disk_directory.hpp"
+#include "test_include.hpp"
 
-namespace untree {
+using dir_lvalue_t = untree::verbose_directory<untree::in_memory_directory&>;
+using dir_rvalue_t = untree::verbose_directory<untree::disk_directory&&>;
 
-template <typename F>
-concept file = std::constructible_from<F, std::filesystem::path> &&
-               requires(F f){
-		 // TODO: enchance create for error handling
-		 f.create();
-		 {f.path()} -> std::convertible_to<std::filesystem::path>;
-	       };
-
-template <typename Directory>
-concept directory =
-    file<Directory> &&
-    requires(Directory dict) {
-       typename Directory::file_type;
-       { dict.push_back(std::declval<entry_t<Directory>>()) } -> std::same_as<void>;
-    } &&
-    file<typename Directory::file_type>;
-
-template <typename Entry>
-concept entry =
-   requires(Entry e){
-     typename Entry::file_type;
-     typename Entry::directory_type;
-   } &&
-   file<typename Entry::file_type> &&
-   directory<typename Entry::directory_type>;
-}  // namespace untree
+TEST_CASE("directory concepts check") {
+  static_assert(untree::directory<dir_lvalue_t>);
+  static_assert(untree::directory<dir_rvalue_t>);
+}

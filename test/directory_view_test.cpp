@@ -22,46 +22,15 @@
  * SOFTWARE.
  */
 
-#include <filesystem>
+#include "directory_view.hpp"
 
-#include "entry.hpp"
+#include "directory_concepts.hpp"
+#include "in_memory_directory.hpp"
+#include "test_include.hpp"
 
-namespace untree {
-
-struct no_op_file {
-  explicit no_op_file(std::filesystem::path path) : path_(std::move(path)) {}
-
-  constexpr static void create() {}
-
-  [[nodiscard]] auto path() const -> std::filesystem::path const& {
-    return path_;
-  }
-
-  auto path() -> std::filesystem::path& { return path_; }
-
- private:
-  std::filesystem::path path_;
-};
-
-struct no_op_directory {
-  using file_type = no_op_file;
-  explicit no_op_directory(std::filesystem::path path)
-      : path_(std::move(path)) {}
-
-  constexpr static void create() {}
-
-  [[nodiscard]] auto path() const -> std::filesystem::path const& {
-    return path_;
-  }
-
-  auto path() -> std::filesystem::path& { return path_; }
-
-  constexpr static auto push_back(entry_t<no_op_directory> const& /*unused*/) {}
-
- private:
-  std::filesystem::path path_;
-};
-
-using no_op_entry = entry_t<no_op_directory>;
-
-}  // namespace untree
+TEST_CASE("directory view concepts check") {
+  static_assert(untree::is_directory_view<
+                untree::directory_view<untree::in_memory_directory&>>);
+  static_assert(untree::is_directory_view<
+                untree::directory_view<untree::in_memory_directory&&>>);
+}

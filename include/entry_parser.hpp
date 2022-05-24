@@ -22,16 +22,37 @@
  * SOFTWARE.
  */
 
-#include "line_node_parser.hpp"
+#pragma once
 
-#include "line_node.hpp"
-#include "test_include.hpp"
+#include "entry.hpp"
+#include "parser.hpp"
 
-TEST_CASE("line node parsing") {
-  static_assert(untree::line_node_parser("│   │   ├── simple.cc\n"sv)->first ==
-                untree::line_node{3, "simple.cc"sv});
+namespace untree {
+namespace detail {
+inline constexpr auto seperator_parser =
+    parser::str("    ")                     //
+    | parser::or_with(parser::str("└── "))  //
+    | parser::or_with(parser::str("├── "))  //
+    | parser::or_with(parser::str("│   "))  //
+    | parser::or_with(parser::str("│\u00A0\u00A0 "));
 
-  static_assert(
-      untree::line_node_parser("│   │   │   ├── cmake.check_cache\n"sv)
-          ->first == untree::line_node{4, "cmake.check_cache"sv});
-}
+inline constexpr auto depth_count_parser =
+    parser::many1(seperator_parser, 0, [](auto num, auto) { return num + 1; });
+
+inline constexpr auto name_parser =
+    parser::many_if([](auto c) { return c != '\n'; }) |
+    parser::ignore(parser::symbol('\n'));
+}  // namespace detail
+
+inline constexpr auto entry_parser = parser::sequence(
+    [](auto cur_depth, auto name, auto next_depth) {
+      entry_type kind{entry_type::file};
+      if (next_depth > cur_depth) {
+        kind = entry_type::directory;
+      }
+      return entry{name, cur_depth, kind};
+    },
+    detail::depth_count_parser, detail::name_parser,
+    detail::depth_count_parser | parser::unconsumed() |
+        parser::or_with(parser::always(0)));
+}  // namespace untree

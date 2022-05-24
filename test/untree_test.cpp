@@ -26,24 +26,22 @@
 
 #include <algorithm>
 
-#include "in_memory_entry.hpp"
+#include "directory_view.hpp"
+#include "in_memory_directory.hpp"
 #include "print_dir.hpp"
 #include "test_include.hpp"
 
-using entry_t = untree::in_memory_entry;
-using file_t = entry_t::file_type;
-using dir_t = entry_t::directory_type;
+using dir_t = untree::in_memory_directory;
+using file_t = untree::in_memory_directory::file_type;
 
 TEST_CASE("single depth tree") {
   constexpr std::string_view str =
       "├── document\n"
       "├── document.cc\n"
       "├── func\n";
-  auto const res = untree::parse_tree(dir_t{"/home"}, str);
+  dir_t root_dir{"/home"};
+  auto const res = untree::parse_tree(untree::directory_view{root_dir}, str);
   REQUIRE(res.has_value());
-  auto entry = res->first;
-  REQUIRE(entry.index() == 1);
-  auto root_dir = std::get<dir_t>(entry);
   dir_t const expected_dir{"/home",
                            {
                                file_t{"/home/document"},
@@ -61,11 +59,10 @@ TEST_CASE("nested depth tree") {
       "└── mvc\n"
       "├── document\n"
       "├── document.cc\n";
-  auto const res = untree::parse_tree(dir_t{"/home"}, str);
+  dir_t root_dir{"/home"};
+  auto const res = untree::parse_tree(untree::directory_view{root_dir}, str);
+  std::cout << "REACHED" << std::endl;
   REQUIRE(res.has_value());
-  auto entry = res->first;
-  REQUIRE(entry.index() == 1);
-  auto root_dir = std::get<dir_t>(entry);
   dir_t const expected_dir{"/home",
                            {
                                dir_t{"/home/constexpr",
@@ -88,12 +85,9 @@ TEST_CASE("only directory on top") {
       "└── mvc\n"
       "    ├── document\n"
       "    ├── document.cc\n";
-  auto const res = untree::parse_tree(dir_t{"new_dir"}, str);
+  dir_t root_dir{"new_dir"};
+  auto const res = untree::parse_tree(untree::directory_view{root_dir}, str);
   REQUIRE(res.has_value());
-  auto entry = res->first;
-  test_util::print_entry(entry);
-  REQUIRE(entry.index() == 1);
-  auto root_dir = std::get<dir_t>(entry);
   dir_t const expected_dir{"new_dir",
                            {
                                dir_t{"new_dir/constexpr",

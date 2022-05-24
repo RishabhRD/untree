@@ -24,63 +24,41 @@
 
 #pragma once
 
+#include <entry.hpp>
 #include <filesystem>
-#include <vector>
+#include <fstream>
 
-#include "entry.hpp"
+#include "directory_view.hpp"
 
 namespace untree {
-struct in_memory_file {
-  explicit in_memory_file(std::filesystem::path path)
+
+struct disk_directory {
+  explicit disk_directory(std::filesystem::path path)
       : path_(std::move(path)) {}
 
   [[nodiscard]] auto path() const -> std::filesystem::path const& {
     return path_;
   }
 
-  auto path() -> std::filesystem::path& { return path_; }
-
-  friend auto operator==(in_memory_file const&, in_memory_file const&) noexcept
-      -> bool = default;
-
-  constexpr static inline void create() {}
-
- private:
-  std::filesystem::path path_;
-};
-
-template <typename File>
-struct in_memory_directory_of
-    : std::vector<untree::entry_t<in_memory_directory_of<File>>> {
-  using file_type = File;
-  using entry_type = untree::entry_t<in_memory_directory_of<file_type>>;
-
-  explicit in_memory_directory_of(std::filesystem::path path)
-      : path_(std::move(path)) {}
-
-  explicit in_memory_directory_of(std::filesystem::path path,
-                                  std::initializer_list<entry_type> entries)
-      : std::vector<entry_type>(entries), path_(std::move(path)) {}
-
-  [[nodiscard]] auto path() const -> std::filesystem::path const& {
-    return path_;
+  auto add_file(std::string_view name) const {
+    auto const res_path = path_ / name;
+    if (!std::filesystem::exists(res_path)) {
+      std::ofstream os{res_path.native()};
+    }
   }
 
-  auto path() -> std::filesystem::path& { return path_; }
+  auto add_dir(std::string_view name) {
+    auto res_path = path_ / name;
+    if (!std::filesystem::exists(res_path)) {
+      std::filesystem::create_directory(res_path);
+    }
+    return directory_view{disk_directory{std::move(res_path)}};
+  }
 
-  constexpr static inline void create() {}
-
-  using std::vector<entry_type>::vector;
-
-  friend auto operator==(in_memory_directory_of const&,
-                         in_memory_directory_of const&) noexcept
-      -> bool = default;
+  auto parent() { return directory_view{disk_directory{path_.parent_path()}}; }
 
  private:
   std::filesystem::path path_;
 };
 
-using in_memory_directory = in_memory_directory_of<in_memory_file>;
-
-using in_memory_entry = entry_t<in_memory_directory>;
 }  // namespace untree
