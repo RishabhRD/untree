@@ -78,20 +78,17 @@ auto main(int argc, char** argv) -> int {
         }
       }
     }
-    std::stringstream stream;
-    stream << std::cin.rdbuf();
-    auto const str{stream.str()};
     if (is_dry_run == true) {
       untree::parse_tree(untree::directory_view{untree::verbose_directory{
                              untree::no_op_directory{}}},
-                         str);
+                         std::cin);
     } else if (is_verbose == true) {
       untree::parse_tree(untree::directory_view{untree::verbose_directory{
                              untree::disk_directory{dir}}},
-                         str);
+                         std::cin);
     } else {
       untree::parse_tree(untree::directory_view{untree::disk_directory{dir}},
-                         str);
+                         std::cin);
     }
   } catch (std::exception const& ex) {
     std::cerr << ex.what() << std::endl;

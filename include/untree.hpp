@@ -24,10 +24,10 @@
 
 #pragma once
 
+#include "accumulate.hpp"
 #include "directory_concepts.hpp"
 #include "entry.hpp"
-#include "entry_parser.hpp"
-#include "parser.hpp"
+#include "entry_range.hpp"
 
 namespace untree {
 namespace detail {
@@ -44,14 +44,13 @@ constexpr auto get_parent_n(int n, DirView dir) {
 // creates directory structure of str inside root_dir
 // precondition: root_dir is already created
 template <is_directory_view DirView>
-auto parse_tree(DirView root_dir, std::string_view str)
-    -> parser::parsed_t<DirView> {
+auto parse_tree(DirView root_dir, std::istream& in) {
   struct state_t {
     DirView dir;
     int depth;
   };
-  auto res = parser::many(
-      entry_parser, state_t{root_dir, 0}, [](state_t cur, entry entry) {
+  return untree::accumulate(
+      entry_range{in}, state_t{root_dir, 0}, [](state_t cur, entry entry) {
         auto dir = detail::get_parent_n(cur.depth - entry.depth + 1,
                                         std::move(cur.dir));
         auto depth = entry.depth - 1;
@@ -62,8 +61,6 @@ auto parse_tree(DirView root_dir, std::string_view str)
           ++depth;
         }
         return state_t{std::move(dir), depth};
-      })(str);
-  if (!res) return std::nullopt;
-  return std::pair{root_dir, res->second};
+      });
 }
 }  // namespace untree

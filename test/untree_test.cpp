@@ -25,6 +25,7 @@
 #include "untree.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 #include "directory_view.hpp"
 #include "in_memory_directory.hpp"
@@ -35,13 +36,13 @@ using dir_t = untree::in_memory_directory;
 using file_t = untree::in_memory_directory::file_type;
 
 TEST_CASE("single depth tree") {
-  constexpr std::string_view str =
+  constexpr auto str =
       "├── document\n"
       "├── document.cc\n"
       "├── func\n";
   dir_t root_dir{"/home"};
-  auto const res = untree::parse_tree(untree::directory_view{root_dir}, str);
-  REQUIRE(res.has_value());
+  std::stringstream in(str);
+  untree::parse_tree(untree::directory_view{root_dir}, in);
   dir_t const expected_dir{"/home",
                            {
                                file_t{"/home/document"},
@@ -52,7 +53,7 @@ TEST_CASE("single depth tree") {
 }
 
 TEST_CASE("nested depth tree") {
-  constexpr std::string_view str =
+  constexpr auto str =
       "├── constexpr\n"
       "│   ├── simple.cc\n"
       "│   └── sort.cc\n"
@@ -60,9 +61,8 @@ TEST_CASE("nested depth tree") {
       "├── document\n"
       "├── document.cc\n";
   dir_t root_dir{"/home"};
-  auto const res = untree::parse_tree(untree::directory_view{root_dir}, str);
-  std::cout << "REACHED" << std::endl;
-  REQUIRE(res.has_value());
+  std::stringstream in(str);
+  untree::parse_tree(untree::directory_view{root_dir}, in);
   dir_t const expected_dir{"/home",
                            {
                                dir_t{"/home/constexpr",
@@ -86,8 +86,8 @@ TEST_CASE("only directory on top") {
       "    ├── document\n"
       "    ├── document.cc\n";
   dir_t root_dir{"new_dir"};
-  auto const res = untree::parse_tree(untree::directory_view{root_dir}, str);
-  REQUIRE(res.has_value());
+  std::stringstream in(str);
+  untree::parse_tree(untree::directory_view{root_dir}, in);
   dir_t const expected_dir{"new_dir",
                            {
                                dir_t{"new_dir/constexpr",

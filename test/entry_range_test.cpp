@@ -22,37 +22,23 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "entry_range.hpp"
 
-#include "entry.hpp"
-#include "parser.hpp"
+#include <sstream>
 
-namespace untree {
-namespace detail {
-inline constexpr auto seperator_parser =
-    parser::str("    ")                     //
-    | parser::or_with(parser::str("└── "))  //
-    | parser::or_with(parser::str("├── "))  //
-    | parser::or_with(parser::str("│   "))  //
-    | parser::or_with(parser::str("│\u00A0\u00A0 "));
+#include "test_include.hpp"
 
-inline constexpr auto depth_count_parser =
-    parser::many1(seperator_parser, 0, [](auto num, auto) { return num + 1; });
-
-inline constexpr auto name_parser =
-    parser::many_if([](auto c) { return c != '\n'; }) |
-    parser::ignore(parser::symbol('\n'));
-}  // namespace detail
-
-inline constexpr auto entry_parser = parser::sequence(
-    [](auto cur_depth, auto name, auto next_depth) {
-      entry_type kind{entry_type::file};
-      if (next_depth > cur_depth) {
-        kind = entry_type::directory;
-      }
-      return entry{name, cur_depth, kind};
-    },
-    detail::depth_count_parser, detail::name_parser,
-    detail::depth_count_parser | parser::unconsumed() |
-        parser::or_with(parser::always(0)));
-}  // namespace untree
+TEST_CASE("tree input stream correctness") {
+  constexpr auto str =
+      "├── document\n"
+      "├── document.cc\n"
+      "├── func\n";
+  std::stringstream in(str);
+  untree::entry_range rng{in};
+  auto fst = rng.begin();
+  REQUIRE(*fst == untree::entry{"document", 1, untree::entry_type::file});
+  ++fst;
+  REQUIRE(*fst == untree::entry{"document.cc", 1, untree::entry_type::file});
+  ++fst;
+  REQUIRE(*fst == untree::entry{"func", 1, untree::entry_type::file});
+}

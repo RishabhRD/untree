@@ -24,17 +24,26 @@
 
 #pragma once
 
-#include <string_view>
-#include <tuple>
+#include "line_info.hpp"
+#include "parser.hpp"
 
 namespace untree {
-enum class entry_type { file, directory };
 
-struct entry {
-  std::string_view name;
-  int depth;
-  entry_type kind;
+inline constexpr auto seperator_parser =
+    parser::str("    ")                     //
+    | parser::or_with(parser::str("└── "))  //
+    | parser::or_with(parser::str("├── "))  //
+    | parser::or_with(parser::str("│   "))  //
+    | parser::or_with(parser::str("│\u00A0\u00A0 "));
 
-  friend auto operator==(entry const&, entry const&) -> bool = default;
-};
+inline constexpr auto depth_count_parser =
+    parser::many1(seperator_parser, 0, [](auto num, auto) { return num + 1; });
+
+inline constexpr auto name_parser =
+    parser::many_if([](auto c) { return c != '\n'; });
+
+inline constexpr auto line_info_parser = parser::combine_with(
+    depth_count_parser, name_parser, [](auto depth, auto name) {
+      return line_info{std::string{name}, depth};
+    });
 }  // namespace untree

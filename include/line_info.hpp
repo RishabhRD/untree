@@ -23,18 +23,13 @@
  */
 
 #pragma once
-
-#include <string_view>
-#include <tuple>
+#include <string>
 
 namespace untree {
-enum class entry_type { file, directory };
-
-struct entry {
-  std::string_view name;
+struct line_info {
+  std::string name;
   int depth;
-  entry_type kind;
 
-  friend auto operator==(entry const&, entry const&) -> bool = default;
+  friend auto operator==(line_info const&, line_info const&) -> bool = default;
 };
 }  // namespace untree

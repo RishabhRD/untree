@@ -24,17 +24,16 @@
 
 #pragma once
 
-#include <string_view>
-#include <tuple>
+#include <utility>
 
 namespace untree {
-enum class entry_type { file, directory };
-
-struct entry {
-  std::string_view name;
-  int depth;
-  entry_type kind;
-
-  friend auto operator==(entry const&, entry const&) -> bool = default;
-};
+// accumulate that supports sentinal node... Not needed in C++23
+template <class InputRange, class T, class BinaryOperation>
+constexpr auto accumulate(InputRange&& rng, T init, BinaryOperation op) -> T {
+  auto const end = rng.end();
+  for (auto first = rng.begin(); first != end; ++first) {
+    init = op(std::move(init), *first);  // std::move since C++20
+  }
+  return init;
+}
 }  // namespace untree

@@ -22,19 +22,27 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "line_info_parser.hpp"
 
-#include <string_view>
-#include <tuple>
+#include "line_info.hpp"
+#include "test_include.hpp"
 
-namespace untree {
-enum class entry_type { file, directory };
+TEST_CASE("parse the matching string of depth 1") {
+  constexpr auto str = "├── document";
+  auto const res = untree::line_info_parser(str);
+  REQUIRE(res.has_value());
+  REQUIRE(res->first == untree::line_info{"document", 1});
+}
 
-struct entry {
-  std::string_view name;
-  int depth;
-  entry_type kind;
+TEST_CASE("parse the matching string of depth 2") {
+  constexpr auto str = "│   ├── simple.cc";
+  auto const res = untree::line_info_parser(str);
+  REQUIRE(res.has_value());
+  REQUIRE(res->first == untree::line_info{"simple.cc", 2});
+}
 
-  friend auto operator==(entry const&, entry const&) -> bool = default;
-};
-}  // namespace untree
+TEST_CASE("parse the non-matching string") {
+  constexpr auto str = "   ";
+  auto const res = untree::line_info_parser(str);
+  REQUIRE_FALSE(res.has_value());
+}
