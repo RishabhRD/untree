@@ -42,3 +42,21 @@ TEST_CASE("tree input stream correctness") {
   ++fst;
   REQUIRE(*fst == untree::entry{"func", 1, untree::entry_type::file});
 }
+
+TEST_CASE("tree input with non parsable lines stream correctness") {
+  constexpr auto str =
+      "├── document\n"
+      "├── document.cc\n"
+      "├── func\n"
+      " \n";
+  std::stringstream in(str);
+  untree::entry_range rng{in};
+  auto fst = rng.begin();
+  REQUIRE(*fst == untree::entry{"document", 1, untree::entry_type::file});
+  ++fst;
+  REQUIRE(*fst == untree::entry{"document.cc", 1, untree::entry_type::file});
+  ++fst;
+  REQUIRE(*fst == untree::entry{"func", 1, untree::entry_type::file});
+  ++fst;
+  REQUIRE(fst == untree::end_entry_iterator{});
+}
